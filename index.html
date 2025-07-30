@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bharat Online Electronics Store</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #f5f5f5;
+            --green: #28a745;
+            --red: #dc3545;
+            --gray: #6c757d;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .search-bar input {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 250px;
+        }
+
+        .cart-badge {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .product {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #fafafa;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .product h3 {
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .stock {
+            font-size: 0.9em;
+            margin: 5px 0;
+        }
+
+        .stock.low {
+            color: var(--red);
+        }
+
+        .stock.high {
+            color: var(--green);
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 4px 2px;
+            cursor: pointer;
+        }
+
+        .add {
+            background-color: var(--green);
+            color: white;
+        }
+
+        .remove {
+            background-color: var(--red);
+            color: white;
+        }
+
+        .cart {
+            background: var(--secondary-color);
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .cart-item {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+
+        .total-price {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        .clear-cart {
+            background-color: var(--gray);
+            color: white;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .top-bar {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .search-bar input {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bharat Online Electronics Store</h1>
+        <div class="top-bar">
+            <div class="search-bar">
+                <input type="text" id="search" placeholder="Search products..." oninput="renderProducts()">
+            </div>
+            <div class="cart-badge">Cart Items: <span id="cart-count">0</span></div>
+        </div>
+
+        <div id="products" class="product-grid"></div>
+
+        <div class="cart">
+            <h2>Current Cart</h2>
+            <div id="cart-items"></div>
+            <div class="total-price" id="total-price">Total Price: ₹0</div>
+            <button class="clear-cart" onclick="clearCart()">Clear Cart</button>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            { name: "Himalaya Snowpoint 16GB RAM Professional Laptop", price: 75000, stock: 10 },
+            { name: "Meru 8GB RAM Photo-ready Smartphone", price: 30000, stock: 15 },
+            { name: "Vindhya 8GB RAM Gaming Tab", price: 20000, stock: 8 },
+            { name: "Nilgiri 32in UHD Monitor", price: 25000, stock: 5 },
+            { name: "Kanchanjunga Smartwatch Gen 2", price: 12000, stock: 20 },
+            { name: "Aravalli Wireless Earbuds", price: 3000, stock: 30 }
+        ];
+
+        let cart = {};
+
+        function renderProducts() {
+            const searchQuery = document.getElementById('search').value.toLowerCase();
+            const productContainer = document.getElementById("products");
+            productContainer.innerHTML = "";
+
+            products.forEach((product, index) => {
+                if (product.name.toLowerCase().includes(searchQuery)) {
+                    const stockClass = product.stock <= 3 ? 'low' : 'high';
+                    productContainer.innerHTML += `
+                        <div class="product">
+                            <h3>${product.name}</h3>
+                            <p>Price: ₹${product.price}</p>
+                            <p class="stock ${stockClass}">Stock: ${product.stock}</p>
+                            <button class="add" onclick="addToCart(${index})">Add to Cart</button>
+                            <button class="remove" onclick="removeFromCart(${index})">Remove</button>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function renderCart() {
+            const cartContainer = document.getElementById("cart-items");
+            const cartCount = document.getElementById("cart-count");
+            cartContainer.innerHTML = "";
+            let totalPrice = 0;
+            let totalItems = 0;
+
+            for (let index in cart) {
+                let item = products[index];
+                let count = cart[index];
+                let itemTotal = item.price * count;
+                totalPrice += itemTotal;
+                totalItems += count;
+                cartContainer.innerHTML += `<div class="cart-item">${item.name} - ${count} pcs - ₹${itemTotal}</div>`;
+            }
+
+            document.getElementById("total-price").innerText = `Total Price: ₹${totalPrice}`;
+            cartCount.innerText = totalItems;
+        }
+
+        function addToCart(index) {
+            if (products[index].stock > 0) {
+                cart[index] = (cart[index] || 0) + 1;
+                products[index].stock -= 1;
+                renderProducts();
+                renderCart();
+            } else {
+                alert("Out of stock!");
+            }
+        }
+
+        function removeFromCart(index) {
+            if (cart[index]) {
+                cart[index] -= 1;
+                products[index].stock += 1;
+                if (cart[index] === 0) delete cart[index];
+                renderProducts();
+                renderCart();
+            } else {
+                alert("Cart does not have this item");
+            }
+        }
+
+        function clearCart() {
+            for (let index in cart) {
+                products[index].stock += cart[index];
+            }
+            cart = {};
+            renderProducts();
+            renderCart();
+        }
+
+        // Initialize
+        renderProducts();
+        renderCart();
+    </script>
+</body>
+</html>
